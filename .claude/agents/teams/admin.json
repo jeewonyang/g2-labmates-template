@@ -1,0 +1,28 @@
+{
+  "id": "admin",
+  "name": "Admin",
+  "summary": "Works the daily inbox and Slack: drafts replies, extracts commitments and deadlines, and proposes calendar entries for approval.",
+  "order": 20,
+  "enabled": true,
+  "cadence": "daily",
+  "run_at": "05:00",
+  "schedule_label": "Gmail + read-independent Slack DMs; daily 05:00 + every 2h, 08:00-20:00",
+  "producer": "admin",
+  "sensitivity_ceiling": "internal",
+  "kinds": [
+    "draft.reply",
+    "admin.extract_commitments",
+    "admin.schedule_proposal",
+    "admin.meeting_followup"
+  ],
+  "notes": [
+    "Runs in the 05:00 morning window, so the morning teams finish before the owner's planning hour. The hour lives in .claude/agents/day-schedule.json, not here - run_at only places this team in agent_day.py's morning half.",
+    "admin.meeting_followup is event-driven, not produced on the daily cadence: G2 enqueues one when a finished meeting is imported (the template ships no meeting-capture app; the job is dormant until one is wired in). The admin producer never emits it, so there is nothing to schedule.",
+    "Every new incoming one-to-one Slack DM is drafted even if it has already been read; Slack read state is not used as the reply cursor.",
+    "Self-forwarded Gmail is addressed to the recovered original sender when the underlying message needs a reply.",
+    "Reply drafts and commitment extractions are created internally without an approval pause, but nothing is sent. Commitment extractions auto-file to the daily log and monthly ledger note in on_result (the owner 2026-09-02) - their only effect is an internal note, so per-item approval gated nothing. Calendar proposals remain review-gated and require explicit approval.",
+    "admin.schedule_proposal is the only job kind in the system whose apply() writes to Google Calendar. That is a deliberate second carve-out in Advisor mode, authorized by the owner 2026-07-26, and it fires only after explicit per-item approval.",
+    "Only proposals that carry events reach their review queue (the owner 2026-09-01): a nothing-to-schedule result auto-completes, because apply() is a no-op for it and the loose date-regex producer makes that the common shape. The prompt also holds a materiality bar - broadcast webinars and FYI events are not proposed.",
+    "Every approved calendar event also lands on their planner: apply() mirrors it into a Prisma task (scheduled at the event start; DUE/all-day events carry dueDate), idempotently via the agent-source marker. A planner failure is logged, never raised - the calendar event already exists."
+  ]
+}

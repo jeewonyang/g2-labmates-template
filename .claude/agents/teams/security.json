@@ -1,0 +1,30 @@
+{
+  "id": "security",
+  "name": "IT / Security",
+  "summary": "Audits the codebase for leaked secrets, vulnerable dependencies, dead code, and documentation that has drifted from what is actually on disk.",
+  "order": 40,
+  "room": {
+    "id": "housekeeping",
+    "name": "Housekeeping"
+  },
+  "enabled": true,
+  "cadence": "weekly",
+  "run_at": "21:30",
+  "schedule_label": "Mon 21:30, after their day ends",
+  "producer": "security",
+  "sensitivity_ceiling": "internal",
+  "kinds": [
+    "sec.secret_scan",
+    "sec.dependency_audit",
+    "sec.stale_docs",
+    "sec.dead_code",
+    "sec.host_config"
+  ],
+  "notes": [
+    "Every finding is REVIEW_REQUIRED and carries a proposed diff. This team never commits, never auto-fixes, and never deletes - the never-delete rule has no exception for tidiness.",
+    "Routed to codex, which runs -s read-only (a real sandbox) and validates output against --output-schema. A code auditor that cannot write is the correct shape for this job.",
+    "sec.stale_docs exists because this repo has repeatedly documented paths that do not exist on disk - CLAUDE.md carries an explicit warning about exactly that. Verifying claims against the filesystem is the highest-value check here.",
+    "Sable's reusable launch-blocking QA routine is canonical at .claude/agents/sable-release-qa.md. It requires adversarial first-user testing, direct evidence, P0/P1 remediation or authorized handoff, and independent retesting before GO.",
+    "Shares the Housekeeping room with Vera (vault) on /teams since 2026-09-22 ('room' field). The room is presentation only: the two teams keep separate manifests, producers, cadences and review rules, because Vera handles private vault content locally and auto-files, while Sable audits code read-only on codex and every finding is review-gated."
+  ]
+}

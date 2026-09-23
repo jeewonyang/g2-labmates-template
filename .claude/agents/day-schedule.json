@@ -1,0 +1,115 @@
+{
+  "$comment": "YOUR day - edit the times to match it (the defaults are a plain 9-to-6 lab day). ONE source of truth: the /today schedule board (src/lib/services/dayPlan.ts) plans tasks into the 'work' blocks only, heartbeat.py takes its default active hours from the first work start to the last work end, and setup_scheduler.ps1 registers the agent tasks from the 'automation' section. Times are local HH:mm, blocks are contiguous and non-overlapping, from 'wake' to 'bed_prep'. Block kinds: routine, transit, work (mode focus|light), meal, workout, rest. 'reminders' hang off a block (start or end) and render as one-line rows on the board; add your own, e.g. {\"id\": \"water\", \"block\": \"lunch\", \"when\": \"end\", \"label\": \"Water\"}. After editing, re-run setup_scheduler.ps1 if you enabled scheduled agents (Task Scheduler stores a snapshot). test_day_schedule.py checks the shape.",
+  "timezone": "America/Los_Angeles",
+  "wake": "07:00",
+  "day_end": "20:00",
+  "bed_prep": "22:30",
+  "sleep_target_hours": 8,
+  "blocks": [
+    {
+      "id": "morning",
+      "kind": "routine",
+      "label": "Plan the day, breakfast",
+      "start": "07:00",
+      "end": "08:00",
+      "hint": "Read the brief, regenerate the schedule, eat."
+    },
+    {
+      "id": "commute",
+      "kind": "transit",
+      "label": "Get ready, head to lab",
+      "start": "08:00",
+      "end": "08:45"
+    },
+    {
+      "id": "settle",
+      "kind": "routine",
+      "label": "Settle in",
+      "start": "08:45",
+      "end": "09:00",
+      "hint": "Coffee, glance at the board. Arriving and starting are two different things."
+    },
+    {
+      "id": "morning_work",
+      "kind": "work",
+      "mode": "focus",
+      "label": "Deep work",
+      "start": "09:00",
+      "end": "12:00",
+      "hint": "Hardest thing first, while attention is freshest."
+    },
+    {
+      "id": "lunch",
+      "kind": "meal",
+      "label": "Lunch",
+      "start": "12:00",
+      "end": "13:00"
+    },
+    {
+      "id": "afternoon_work",
+      "kind": "work",
+      "mode": "focus",
+      "label": "Afternoon work",
+      "start": "13:00",
+      "end": "18:00",
+      "hint": "Bench work, meetings, analysis."
+    },
+    {
+      "id": "dinner",
+      "kind": "meal",
+      "label": "Dinner",
+      "start": "18:00",
+      "end": "19:00"
+    },
+    {
+      "id": "evening_work",
+      "kind": "work",
+      "mode": "light",
+      "label": "Light work",
+      "start": "19:00",
+      "end": "20:00",
+      "hint": "Email, reading, tomorrow's plan. Nothing that needs deep focus."
+    },
+    {
+      "id": "wind_down",
+      "kind": "rest",
+      "label": "Free time",
+      "start": "20:00",
+      "end": "22:30"
+    }
+  ],
+  "reminders": [],
+  "meal_spacing_hours": {
+    "min": 5,
+    "max": 6
+  },
+  "planning": {
+    "$comment": "Sustainability rules the board enforces. max_planned_task_hours caps what gets placed in a day so open time survives as a buffer; a break is inserted after focus_break_after_minutes of back-to-back planned work; light windows only take tasks up to light_max_task_minutes.",
+    "max_planned_task_hours": 8,
+    "focus_break_after_minutes": 90,
+    "break_minutes": 10,
+    "light_max_task_minutes": 30
+  },
+  "automation": {
+    "$comment": "Agent task times, used only if you opt in with setup_scheduler.ps1 (nothing is scheduled by default). morning_run finishes before you wake so digests are ready for planning; intraday checks run from arrival to the end of light work; evening_run starts after day_end; wiki runs after the evening run. The team manifests' run_at must match morning_run / evening_run.",
+    "morning_run": "05:00",
+    "reflection": "06:00",
+    "intraday_admin": {
+      "start": "09:00",
+      "every_hours": 2,
+      "until": "20:00"
+    },
+    "heartbeat": {
+      "start": "09:00",
+      "every_minutes": 30,
+      "until": "20:00"
+    },
+    "slack_monitor": {
+      "start": "09:00",
+      "every_hours": 1,
+      "until": "20:00"
+    },
+    "evening_run": "21:30",
+    "wiki": "22:30"
+  }
+}

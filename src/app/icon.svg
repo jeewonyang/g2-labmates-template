@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    App icon. Same geometry as src/components/brand/G2Mark.tsx (a one-line heart
+    whose left half is a G and right half is a 2), on the same indigo chip the
+    header brand uses. Colours are literal here because a favicon has no
+    inherited currentColor to resolve against. Change both files together.
+  -->
+  <defs>
+    <linearGradient id="g2chip" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d7ff5" />
+      <stop offset="1" stop-color="#4338ca" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#g2chip)" />
+  <!-- The artwork's ink sits at x 3.2-20.8, y 4.5-20.8 of its own 24 box, so it
+       is scaled up and re-centred rather than simply inset. -->
+  <g transform="translate(2.2 1.45) scale(1.15)" fill="none" stroke="#ffffff" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20.8C8.5 18.4 4.5 14.9 3.2 11.5 1.8 7.9 4.3 4.5 7.6 4.5 9.7 4.5 11.2 6 12 7.9 12.8 6 14.3 4.5 16.4 4.5 19.7 4.5 22.2 7.9 20.8 11.5 20 14.4 17.9 17 15.8 18.8 14.7 19.8 13.3 20.5 12 20.8Z" />
+    <path d="M11.3 11.8H7.7" />
+  </g>
+</svg>

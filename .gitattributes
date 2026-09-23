@@ -1,0 +1,10 @@
+# VAULT/Memory is written on more than one machine at once: the desktop's
+# agents append to daily logs, calendar-writes.md, and MEMORY.md all day while
+# cloud sessions commit to the same files. When both sides touch the same lines,
+# a normal merge stops with conflict markers - and on the unattended updater
+# (apply_update.ps1) that means the machine stays stale until someone resolves
+# it by hand, every 30 minutes. `merge=union` keeps BOTH sides' lines instead:
+# for append-only logs that is exactly right, and for MEMORY.md a rare
+# out-of-order bullet is a strikeable line, while a lost one is not. Nothing
+# outside this folder gets it - code conflicts must still stop.
+VAULT/Memory/**/*.md merge=union

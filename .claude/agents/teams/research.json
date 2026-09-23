@@ -1,0 +1,43 @@
+{
+  "id": "research",
+  "name": "Scientific Research",
+  "summary": "Two desks: Rho reads new literature against their active projects and tracks what moved on each project; Argus is the bench - one desk for LabSerf's agents (flow/ultrasound analysis, primer and construct design, experiment critique, figure review), each launched from the lab notebook.",
+  "order": 10,
+  "enabled": true,
+  "cadence": "daily",
+  "run_at": "05:00",
+  "schedule_label": "Daily 05:00",
+  "producer": "research",
+  "sensitivity_ceiling": "private",
+  "kinds": [
+    "research.lit_review",
+    "research.project_pulse",
+    "research.next_actions"
+  ],
+  "notes": [
+    "Runs in the 05:00 morning window, before the owner's planning hour. The hour lives in .claude/agents/day-schedule.json, not here - run_at only places this team in agent_day.py's morning half.",
+    "Unpublished work lives in VAULT/Research-Private/. The dispatcher derives sensitivity from the payload path, so a job touching that tree is forced onto ollama regardless of what this manifest says - the ceiling here is documentation, the guard in dispatch.py is enforcement.",
+    "lit_review on a public arXiv paper is internal and may use the claude CLI; the same job on an unpublished manuscript is private and stays local.",
+    "Argus is one bench desk for LabSerf's four agents - labserf (flow/ultrasound analysis), cloner (primers/constructs), advisor (experiment critique and the negative-result ledger) and figure-designer (figure review). They are separate agents in labserf/.claude/agents (LABSERF_ROOT overrides) and the lab notebook keeps their own names; /teams shows one seat. Argus's status aggregates the lab runner's run files (.claude/data/state/lab-runs/) across every assay, with the negative-result ledger as the resting note. Runs are explicit per-run launches from /research/notebook on their subscription, never the dispatcher. The model chips keep the policy kinds research.lab_analysis and research.lab_cloning.",
+    "research.next_actions is retired: the producer no longer emits it; the module stays registered so its history still groups under this team."
+  ],
+  "members": [
+    {
+      "id": "rho",
+      "name": "Rho",
+      "role": "Literature & project pulse",
+      "kinds": [
+        "research.lit_review",
+        "research.project_pulse",
+        "research.next_actions"
+      ]
+    },
+    {
+      "id": "argus",
+      "name": "Argus",
+      "role": "Bench · LabSerf analysis, cloning, critique, figures",
+      "kinds": [],
+      "desk": "lab-bench"
+    }
+  ]
+}

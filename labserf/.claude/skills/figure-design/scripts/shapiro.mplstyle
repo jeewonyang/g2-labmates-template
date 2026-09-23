@@ -1,0 +1,81 @@
+# Shapiro Lab figure style.
+# "8pt Arial font for everything (not bold), 0.5 pt line widths for everything."
+#   - Anatomy of a Manuscript, M. Shapiro, 2020-03-29
+
+font.family:         sans-serif
+font.sans-serif:     Arial, Helvetica, Liberation Sans, DejaVu Sans
+font.size:           8
+font.weight:         normal
+
+axes.titlesize:      8
+axes.labelsize:      8
+axes.titleweight:    normal
+axes.labelweight:    normal
+xtick.labelsize:     8
+ytick.labelsize:     8
+legend.fontsize:     8
+figure.titlesize:    8
+figure.titleweight:  normal
+
+# Every line is 0.5 pt.
+axes.linewidth:      0.5
+lines.linewidth:     0.5
+patch.linewidth:     0.5
+grid.linewidth:      0.5
+xtick.major.width:   0.5
+ytick.major.width:   0.5
+xtick.minor.width:   0.5
+ytick.minor.width:   0.5
+hatch.linewidth:     0.5
+lines.markeredgewidth: 0.5
+
+# Clean frame: no top/right spine, outward ticks, no grid.
+axes.spines.top:     False
+axes.spines.right:   False
+axes.grid:           False
+xtick.direction:     out
+ytick.direction:     out
+xtick.major.size:    2
+ytick.major.size:    2
+xtick.minor.size:    1
+ytick.minor.size:    1
+
+# Unframed legend, sitting in the plot.
+legend.frameon:      False
+legend.handlelength: 1.2
+legend.handletextpad: 0.5
+legend.labelspacing: 0.3
+legend.borderaxespad: 0.2
+
+# White, cropped, print-ready.
+figure.facecolor:    white
+axes.facecolor:      white
+savefig.facecolor:   white
+savefig.bbox:        tight
+savefig.pad_inches:  0.02
+figure.dpi:          150
+savefig.dpi:         600
+
+lines.markersize:    2.5
+lines.solid_capstyle: round
+
+# Keep text as text in the vector output so the checker (and Illustrator) can
+# read it. TrueType, not Type 3.
+pdf.fonttype:        42
+ps.fonttype:         42
+svg.fonttype:        none
+
+# Keep any mathtext in Arial too. Prefer Unicode superscripts over mathtext
+# where possible: mathtext shrinks exponents below 8 pt, which the figure
+# checker (correctly) flags.
+mathtext.fontset:    custom
+mathtext.rm:         Arial
+mathtext.it:         Arial:italic
+mathtext.bf:         Arial:bold
+mathtext.default:    regular
+
+# Default colour cycle, for any series drawn without an explicit colour.
+# Greys and the lab blue only: orange means "the point of the figure", and an
+# automatic default cannot know which series that is.
+# ink, blue, grey, light blue, light grey, dark grey
+axes.prop_cycle:     cycler('color', ['000000', '5CB2C4', '969696', 'A2D5E0', 'C8C8C8', '646464'])

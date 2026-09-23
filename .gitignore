@@ -1,0 +1,74 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/.next-dev/
+/.next-stale*/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
+.DS_Store
+._*
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ecdsa*
+id_ed25519*
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files: every variant, except the placeholder template.
+.env*
+!.env.example
+
+# typescript
+*.tsbuildinfo
+
+# database (your tasks, notes and projects live here)
+prisma/*.db
+prisma/*.db-journal
+
+# local claude settings and runtime data (scripts/hooks/skills ARE versioned)
+.claude/settings.local.json
+.claude/launch.json
+.claude/data/
+.claude/worktrees/
+**/__pycache__/
+
+# ---------------------------------------------------------------------------
+# YOUR KNOWLEDGE VAULT IS NEVER COMMITTED.
+#
+# This repository is a shared template. Everything personal - VAULT/ (your
+# memory, notes, drafts, lab notebook), the database, and LabSerf's results -
+# stays on your machine. The blank starting files live in vault-template/ and
+# `python .claude/scripts/init_vault.py` copies them into VAULT/.
+#
+# If you want your vault under version control, put it in a SEPARATE private
+# repository of your own - never push it to the template.
+# ---------------------------------------------------------------------------
+/VAULT/
+**/_private/
+
+# LabSerf bench: the agents and skills are versioned; what they produce is yours.
+/labserf/LabMemory/*
+!/labserf/LabMemory/.gitkeep
+/labserf/Sequences/
+/labserf/Protocols/
+/labserf/ExampleData/
+/labserf/.claude/skills/scientific-advisor/assets/protocol_index.json
+/labserf/.claude/skills/molecular-cloning/assets/mtk_inventory.csv
+/labserf/.claude/skills/*/.venv/
+
+# Lab-run outputs for data that must not be written in place, and any sibling
+# apps you keep in this folder (each is its own project).
+/AppDev/

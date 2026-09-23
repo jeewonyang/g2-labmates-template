@@ -1,0 +1,319 @@
+// Second Brain data model.
+//
+// Design constraints:
+// - SQLite locally, portable to Postgres (no SQLite-only features).
+// - Status/type/priority fields are strings validated by zod in src/lib/types.ts,
+//   not Prisma enums, so vocabularies can be renamed/extended without migrations.
+// - Sync-friendly: cuid ids, updatedAt everywhere, soft archive via archivedAt,
+//   and InboxItem.clientId as an idempotency key for offline mobile capture.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A PARA domain: an ongoing responsibility ("area") or a topic of interest
+// ("resource" domain). Mirrors the Notion 영역•자원 database.
+model Area {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  type        String    @default("area") // area | resource
+  health      String    @default("healthy") // healthy | needs_attention | at_risk
+  icon        String?
+  pinned      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime?
+
+  projects   Project[]
+  tasks      Task[]
+  notes      Note[]
+  resources  Resource[]
+  goals      Goal[]
+  inboxItems InboxItem[]
+  tags       Tag[]       @relation("AreaTags")
+}
+
+// Longer-term target, optionally scoped to a year/quarter. Mirrors 목표.
+model Goal {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("not_started") // not_started | in_progress | paused | completed
+  year        Int?
+  quarter     Int? // 1-4
+  startDate   DateTime?
+  targetDate  DateTime?
+  areaId      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime?
+
+  area     Area?     @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  projects Project[]
+  tags     Tag[]     @relation("GoalTags")
+}
+
+// An active outcome with an end state. Mirrors 프로젝트.
+model Project {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  status       String    @default("active") // inbox | active | paused | completed | archived
+  priority     String    @default("medium") // low | medium | high | urgent
+  areaId       String?
+  goalId       String?
+  startDate    DateTime?
+  targetDate   DateTime?
+  nextActionId String?   @unique
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  archivedAt   DateTime?
+  completedAt  DateTime?
+
+  area       Area?       @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  goal       Goal?       @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  nextAction Task?       @relation("ProjectNextAction", fields: [nextActionId], references: [id], onDelete: SetNull)
+  tasks      Task[]
+  notes      Note[]
+  resources  Resource[]
+  inboxItems InboxItem[]
+  tags       Tag[]       @relation("ProjectTags")
+}
+
+// Actionable next step. GTD clarify statuses + contexts mirror 할 일.
+model Task {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  status        String    @default("inbox") // inbox | next | scheduled | waiting | someday | completed | canceled
+  previousStatus String? // reversible completion/reschedule transitions
+  priority      String    @default("medium") // low | medium | high | urgent
+  context       String? // e.g. office, lab, cbic, computer, phone, home, errand, anywhere, creative, routine
+  isHighlight   Boolean   @default(false) // 오늘의 하이라이트 — the one task that matters most today
+  dueDate       DateTime?
+  scheduledDate DateTime?
+  completedAt   DateTime?
+  projectId     String?
+  areaId        String?
+  parentTaskId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  archivedAt    DateTime?
+
+  project           Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  area              Area?    @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  parentTask        Task?    @relation("Subtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subtasks          Task[]   @relation("Subtasks")
+  nextActionOf      Project? @relation("ProjectNextAction")
+  notes             Note[]   @relation("TaskNotes")
+  timeEntries       TimeEntry[]
+  tags              Tag[]    @relation("TaskTags")
+
+  @@index([status, dueDate])
+  @@index([projectId])
+  @@index([areaId])
+}
+
+// What she ACTUALLY did, logged against the day's plan (2026-09-17). One row per
+// stretch of time on the Actual side of the /today Plan & actual board: a task
+// she worked on, a fixed block she kept (lunch, workout), or anything else. The
+// plan itself is not stored here - it lives in .claude/data/state/day-plan.json
+// and is regenerated; this is the durable half, the record of the day, so it
+// belongs in Prisma like every other thing she writes down. Never hard-deleted:
+// archivedAt hides it, the same rule as every other entity.
+model TimeEntry {
+  id         String    @id @default(cuid())
+  day        DateTime  // local midnight of the day the entry belongs to
+  startAt    DateTime
+  endAt      DateTime
+  title      String
+  kind       String    @default("other") // task | block | other
+  taskId     String?
+  blockId    String?   // id of a day-schedule.json block (lunch, workout, ...)
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  task Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([day])
+  @@index([taskId])
+}
+
+// Atomic thought, meeting note, journal entry, or reflection. Mirrors 노트,
+// including the note↔note self-relation used for backlinks.
+model Note {
+  id              String    @id @default(cuid())
+  title           String
+  contentMarkdown String    @default("")
+  type            String    @default("fleeting") // fleeting | literature | permanent | meeting | journal | review | reference
+  pinned          Boolean   @default(false)
+  sourceUrl       String?
+  date            DateTime? // for journal/daily notes
+  projectId       String?
+  areaId          String?
+  resourceId      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  archivedAt      DateTime?
+
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  area        Area?     @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  resource    Resource? @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+  tasks       Task[]    @relation("TaskNotes")
+  linkedNotes Note[]    @relation("NoteLinks")
+  linkedFrom  Note[]    @relation("NoteLinks")
+  tags        Tag[]     @relation("NoteTags")
+
+  @@index([type, date])
+}
+
+// Saved reference material: articles, books, videos, tools...
+model Resource {
+  id         String    @id @default(cuid())
+  title      String
+  type       String    @default("article") // article | book | video | course | podcast | document | tool | other
+  url        String?
+  summary    String?
+  status     String    @default("inbox") // inbox | consuming | completed | saved
+  projectId  String?
+  areaId     String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  area    Area?    @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  notes   Note[]
+  tags    Tag[]    @relation("ResourceTags")
+}
+
+// Periodic reflection. Mirrors the 점검 routine.
+model Review {
+  id              String   @id @default(cuid())
+  type            String // daily | weekly | monthly | quarterly
+  date            DateTime
+  wins            String?
+  challenges      String?
+  lessons         String?
+  priorities      String?
+  contentMarkdown String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  archivedAt      DateTime?
+
+  @@unique([type, date])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  createdAt DateTime @default(now())
+
+  tasks      Task[]      @relation("TaskTags")
+  notes      Note[]      @relation("NoteTags")
+  resources  Resource[]  @relation("ResourceTags")
+  projects   Project[]   @relation("ProjectTags")
+  areas      Area[]      @relation("AreaTags")
+  goals      Goal[]      @relation("GoalTags")
+  inboxItems InboxItem[] @relation("InboxItemTags")
+}
+
+// Universal capture target. Anything captured from any client (web, iOS app,
+// widget, share sheet, Siri) lands here in "inbox" status, then gets processed
+// into a Task/Note/Resource (recorded via processedIntoType/Id).
+model InboxItem {
+  id                String    @id @default(cuid())
+  type              String    @default("unknown") // note | task | resource | idea | journal | unknown
+  rawText           String
+  parsedTitle       String?
+  source            String    @default("web") // web | ios_app | ios_widget | share_extension | siri_shortcut | manual | api
+  status            String    @default("inbox") // inbox | processed | archived
+  sourceUrl         String?
+  dueDate           DateTime?
+  metadata          String? // JSON blob for client-specific payloads (device, location, audio ref...)
+  clientId          String?   @unique // client-generated idempotency key for offline sync
+  capturedAt        DateTime  @default(now()) // when the user captured it (client clock)
+  createdAt         DateTime  @default(now()) // when the server persisted it
+  updatedAt         DateTime  @updatedAt
+  processedIntoType String? // task | note | resource
+  processedIntoId   String?
+  projectId         String?
+  areaId            String?
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  area    Area?    @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  tags    Tag[]    @relation("InboxItemTags")
+  automation CaptureAutomation?
+
+  @@index([status, capturedAt])
+}
+
+// Durable state for the automatic capture pipeline. The inbox record remains
+// the immutable source; this record tracks local triage, independent review,
+// policy decisions, filesystem placement, and the entities created from it.
+model CaptureAutomation {
+  id                 String    @id @default(cuid())
+  inboxItemId        String    @unique
+  mode               String    @default("automatic") // automatic | manual
+  state              String    @default("queued") // queued | local_triage | verifying | ready | applied | needs_review | failed | overridden
+  stagedPath         String?
+  destinationPath    String?
+  localJobId         String?   @unique
+  verifierJobId      String?   @unique
+  localDecision      String? // JSON; append-only events preserve earlier versions
+  verifiedDecision   String? // JSON
+  effectiveDecision  String? // JSON actually executed
+  confidence         Float?
+  requiresReview     Boolean   @default(false)
+  error              String?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  inboxItem InboxItem         @relation(fields: [inboxItemId], references: [id], onDelete: Restrict)
+  events    AutomationEvent[]
+
+  @@index([state, updatedAt])
+}
+
+// Append-only provenance shared by the dashboard and every agent. Current
+// state lives on CaptureAutomation; the event stream explains how it got there.
+model AutomationEvent {
+  id           String   @id @default(cuid())
+  automationId String
+  type         String
+  actor        String
+  payload      String? // JSON
+  createdAt    DateTime @default(now())
+
+  automation CaptureAutomation @relation(fields: [automationId], references: [id], onDelete: Restrict)
+
+  @@index([automationId, createdAt])
+  @@index([type, createdAt])
+}
+
+// Generic cross-entity link for relationships the typed relations above
+// don't cover (e.g. resource↔goal). Kept polymorphic on purpose.
+model EntityLink {
+  id        String   @id @default(cuid())
+  fromType  String
+  fromId    String
+  toType    String
+  toId      String
+  kind      String   @default("related")
+  createdAt DateTime @default(now())
+
+  @@unique([fromType, fromId, toType, toId, kind])
+  @@index([fromType, fromId])
+  @@index([toType, toId])
+}

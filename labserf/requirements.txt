@@ -1,0 +1,12 @@
+# Everything the LabSerf bench scripts import (flow cytometry, ultrasound,
+# cloning, figure design, protocol index). Install into the Python that
+# LABSERF_PYTHON points at (or the default `python`):
+#   pip install -r labserf/requirements.txt
+numpy>=1.21
+scipy>=1.7
+matplotlib>=3.5
+pandas
+h5py          # ultrasound .mat (v7.3) files
+openpyxl      # Excel plate maps and protocols
+python-docx   # protocol index: .docx
+pypdf         # protocol index: .pdf

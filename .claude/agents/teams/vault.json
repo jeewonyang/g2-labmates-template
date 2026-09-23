@@ -1,0 +1,30 @@
+{
+  "id": "vault",
+  "name": "Vault Maintenance",
+  "summary": "Keeps the vault current: files new intake into the right PARA folder, folds yesterday's daily log into MEMORY.md, and grows the wiki.",
+  "order": 50,
+  "room": {
+    "id": "housekeeping",
+    "name": "Housekeeping"
+  },
+  "enabled": true,
+  "cadence": "daily",
+  "run_at": "21:30",
+  "schedule_label": "Daily 21:30, after their day ends",
+  "producer": "vault",
+  "sensitivity_ceiling": "private",
+  "kinds": [
+    "triage.classify",
+    "triage.review",
+    "memory.reflect",
+    "wiki.ingest",
+    "echo.check"
+  ],
+  "notes": [
+    "Runs in the 21:30 evening window, after the day ends, so the daily log this team reflects on is complete. The hour lives in .claude/agents/day-schedule.json.",
+    "This team is the answer to 'keep the VAULT at its most up-to-date state at all times'. It owns the four capabilities that already existed before teams were introduced, plus echo.check, the no-op diagnostic used to prove the dispatcher is alive.",
+    "triage.classify runs on ollama and is marked private: intake demonstrably mixes in immigration and third-party material, so it is never routed to a cloud model.",
+    "memory.reflect keeps its once-per-calendar-day guard. Repeated runs on the same day are skipped rather than re-spending.",
+    "Shares the Housekeeping room with Sable (security) on /teams since 2026-09-22 ('room' field). The room is presentation only: the two teams keep separate manifests, producers, cadences and review rules, because Vera handles private vault content locally and auto-files, while Sable audits code read-only on codex and every finding is review-gated."
+  ]
+}
