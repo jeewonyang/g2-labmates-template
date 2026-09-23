@@ -192,8 +192,8 @@ export default async function SettingsPage() {
             <Shortcut keys="g then i" label="Go to Inbox" />
             <Shortcut keys="g then p" label="Go to Projects" />
             <Shortcut keys="g then k" label="Go to Tasks" />
-            <Shortcut keys="g then n / r / a / g" label="Notes / Resources / Areas / Goals" />
-            <Shortcut keys="g then d / e / o / w / m" label="Drafts / Teams / Agent OS / Wiki / Memory" />
+            <Shortcut keys="g then a / x / v" label="Areas / Archive / Reviews" />
+            <Shortcut keys="g then r / e / w / s" label="Research / Teams / Wiki / Diagnostics" />
           </dl>
         </SectionCard>
 
